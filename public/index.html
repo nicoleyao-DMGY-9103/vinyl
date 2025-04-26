@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Recording to Text - Hugging Face Whisper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        #status {
+            margin: 10px 0;
+            font-style: italic;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            min-height: 100px;
+        }
+        .loading {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Voice Recording to Text</h1>
+    <button id="recordButton">Start Recording</button>
+    <div id="status">Ready</div>
+    <div>
+        <h3>Conversion Result:</h3>
+        <div id="result">The converted text will be displayed here</div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let recording = false;
+        
+        const recordButton = document.getElementById('recordButton');
+        const statusElement = document.getElementById('status');
+        const resultElement = document.getElementById('result');
+        
+        recordButton.addEventListener('click', toggleRecording);
+        
+        async function toggleRecording() {
+            if (!recording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', convertSpeechToText);
+                    
+                    mediaRecorder.start();
+                    recording = true;
+                    recordButton.textContent = 'Stop Recording';
+                    statusElement.textContent = 'Recording...';
+                } catch (error) {
+                    console.error('Failed to get microphone permission:', error);
+                    statusElement.textContent = 'Cannot access microphone, please ensure permission is granted';
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                recording = false;
+                recordButton.textContent = 'Start Recording';
+                statusElement.textContent = 'Recording completed, processing...';
+            }
+        }
+        
+        async function convertSpeechToText() {
+            // Create audio Blob, different formats can be selected
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            
+            // Create form data to send audio
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            
+            statusElement.textContent = 'Uploading and converting to text...';
+            resultElement.innerHTML = '<span class="loading">Processing...</span>';
+            
+            try {
+                // Send to our backend, which will interact with the Hugging Face API
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Server response status:', response.status);
+                
+                // Check response status
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    throw new Error(`Server returned error: ${response.status} ${response.statusText}`);
+                }
+                
+                // Check response content type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Response is not JSON data:', text);
+                    throw new Error('Server did not return JSON data');
+                }
+                
+                // Try to parse JSON
+                let data;
+                try {
+                    data = await response.json();
+                } catch (jsonError) {
+                    console.error('JSON parsing error:', jsonError);
+                    throw new Error('Unable to parse server response JSON');
+                }
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                statusElement.textContent = 'Conversion complete!';
+                resultElement.textContent = data.text;
+            } catch (error) {
+                console.error('Conversion failed:', error);
+                statusElement.textContent = 'Error occurred during upload or conversion';
+                resultElement.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
