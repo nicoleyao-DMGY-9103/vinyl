@@ -2,8 +2,8 @@ let playerImg;
 let angle = 0;
 let vinylImages = []; // Store multiple vinyl record images
 let currentVinylIndex = 0; // Current displayed vinyl index
-let vinylScale = 0.3; // Scale variable
-let tonearmScale = 0.7
+let vinylScale = 0.25; // Scale variable
+let tonearmScale = 0.62
 let buttons = []; // Button array
 let buttonPressed = -1; // Track currently pressed button index
 let leftHalfWidth; // Left half width
@@ -53,7 +53,8 @@ function preload() {
   vinylImages.push(loadImage('v1.png'));
   vinylImages.push(loadImage('v2.png'));
   vinylImages.push(loadImage('v3.png'));
-  
+  vinylImages.push(loadImage('v4.png'));
+
   // 加载歌词文件
   loadStrings('text.txt', function(result) {
     lyrics = result;
@@ -76,14 +77,14 @@ function setup() {
   const buttonWidth = 80;
   const buttonHeight = 40;
   const buttonSpacing = 20;
-  const buttonColors = ["#FF5252", "#4CAF50", "#2196F3"]; // Red, Green, Blue button colors
-  const buttonNames = ["red", "green", "blue"];
+  const buttonColors = ["#FF5252", "#4CAF50", "#2196F3", "#FF9800"]; // Red, Green, Blue button colors
+  const buttonNames = ["love", "travel", "adventure", "life lesson"];
   
   // 计算按钮起始位置，顶部居中
-  let startX = (width - (buttonWidth * 3 + buttonSpacing * 2)) / 2;
+  let startX = (width - (buttonWidth * 4 + buttonSpacing * 3)) / 2;
   let topMargin = 40; // 顶部边距
   
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     buttons.push({
       x: startX + i * (buttonWidth + buttonSpacing),
       y: topMargin,
@@ -132,20 +133,20 @@ function setup() {
   
   // 创建录制页面的按钮 - 向上移动200像素
   recordButton = createButton('Start Recording');
-  recordButton.position(width*3/4 - 200, height/2 - 250); // 从height/2 - 50改为height/2 - 250
+  recordButton.position(width*3/4 - 180, height/2 - 250); // 从height/2 - 50改为height/2 - 250
   recordButton.size(150, 50);
   recordButton.mousePressed(toggleRecording);
   recordButton.hide(); // 默认隐藏，只在录制模式显示
   
   transcribeButton = createButton('Transcribe Audio');
-  transcribeButton.position(width*3/4 - 200, height/2 - 180); // 从height/2 + 20改为height/2 - 180
+  transcribeButton.position(width*3/4 - 180, height/2 - 180); // 从height/2 + 20改为height/2 - 180
   transcribeButton.size(150, 50);
   transcribeButton.mousePressed(transcribeAudio);
   transcribeButton.attribute('disabled', '');
   transcribeButton.hide(); // 默认隐藏，只在录制模式显示
   
   saveButton = createButton('Save Lyrics');
-  saveButton.position(width*3/4 - 20, height/2 - 180); // 从height/2 + 90改为height/2 - 110
+  saveButton.position(width*3/4 + 10, height/2 - 180); // 从height/2 + 90改为height/2 - 110
   saveButton.size(150, 50);
   saveButton.mousePressed(saveLyrics);
   saveButton.attribute('disabled', '');
@@ -276,12 +277,6 @@ function drawRecordMode() {
     textAlign(CENTER, CENTER);
     text(timeText, width*3/4 + 90, height/2 - 225);
     
-    // 绘制进度条
-    if (isRecording) {
-      let progressWidth = map(recordingDuration, 0, MAX_RECORDING_TIME, 0, 80);
-      fill(255, 255, 255, 100);
-      rect(width*3/4 + 60, height/2 - 270, progressWidth, 5, 2);
-    }
   }
   
   // 绘制录音动画（如果正在录音）
