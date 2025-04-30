@@ -2,12 +2,19 @@ let playerImg;
 let angle = 0;
 let vinylImages = []; // Store multiple vinyl record images
 let currentVinylIndex = 0; // Current displayed vinyl index
-let vinylScale = 0.25; // Scale variable
-let tonearmScale = 0.62
+let vinylScale = 0.28; // Scale variable
+let tonearmScale = 0.65
 let buttons = []; // Button array
 let buttonPressed = -1; // Track currently pressed button index
 let leftHalfWidth; // Left half width
 let coverImg; // Added cover image variable
+let backgroundImages = []; // Store background images
+let startImg; // Start image
+let endImg; // End image
+let voiceImg; // Voice image
+let pauseImg; // Pause image
+let listImg; // List image
+let uploadButton; // Upload cover image button
 
 // 歌词相关变量
 let lyrics = [];
@@ -48,12 +55,23 @@ function preload() {
   // Preload images
   playerImg = loadImage('tonearm.png');
   coverImg = loadImage('cover.png'); // Load the cover image
+  startImg = loadImage('start.svg'); // Load start image
+  endImg = loadImage('end.svg'); // Load end image
+  voiceImg = loadImage('voice.svg'); // Load voice image
+  pauseImg = loadImage('pause.svg'); // Load pause image
+  listImg = loadImage('list.svg'); // Load list image
 
   // Load multiple vinyl images
   vinylImages.push(loadImage('v1.png'));
   vinylImages.push(loadImage('v2.png'));
   vinylImages.push(loadImage('v3.png'));
   vinylImages.push(loadImage('v4.png'));
+
+  // Load background images
+  backgroundImages.push(loadImage('b1.png'));
+  backgroundImages.push(loadImage('b2.png'));
+  backgroundImages.push(loadImage('b3.png'));
+  backgroundImages.push(loadImage('b4.png'));
 
   // 加载歌词文件
   loadStrings('text.txt', function(result) {
@@ -65,29 +83,25 @@ function preload() {
 }
 
 function setup() {
-  // Create fullscreen canvas
   createCanvas(windowWidth, windowHeight);
-  // Center image display
   imageMode(CENTER);
   
-  // Calculate left half width
   leftHalfWidth = width / 2;
   
-  // Create buttons
   const buttonWidth = 80;
   const buttonHeight = 40;
   const buttonSpacing = 20;
-  const buttonColors = ["#FF5252", "#4CAF50", "#2196F3", "#FF9800"]; // Red, Green, Blue button colors
-  const buttonNames = ["love", "travel", "adventure", "life lesson"];
+  const buttonColors = ["#FF5252", "#4CAF50", "#2196F3", "#FF9800"]; 
+  const buttonNames = ["love", "travel", "adventure", "childhood"];
   
-  // 计算按钮起始位置，顶部居中
-  let startX = (width - (buttonWidth * 4 + buttonSpacing * 3)) / 2;
+  // 计算按钮起始位置，右侧垂直排列
+  let rightMargin = 40; // 右侧边距
   let topMargin = 40; // 顶部边距
   
   for (let i = 0; i < 4; i++) {
     buttons.push({
-      x: startX + i * (buttonWidth + buttonSpacing),
-      y: topMargin,
+      x: width - buttonWidth - rightMargin, // 将按钮放在右半部分
+      y: topMargin + i * (buttonHeight + buttonSpacing), // 垂直排列
       width: buttonWidth,
       height: buttonHeight,
       color: buttonColors[i],
@@ -100,10 +114,10 @@ function setup() {
   const modeButtonWidth = 100;
   const modeButtonHeight = 40;
   const modeButtonSpacing = 20;
-  const modeButtonColors = ["#9C27B0", "#FF9800"]; // 紫色和橙色
+  const modeButtonColors = ["#fbd35a", "#ff943b"]; 
   const modeButtonNames = ["Display", "Record"];
   const modeButtonValues = ["show", "record"];
-  const leftMargin = 20; // 左侧边距
+  const leftMargin = 20; 
   
   for (let i = 0; i < 2; i++) {
     modeButtons.push({
@@ -133,32 +147,58 @@ function setup() {
   
   // 创建录制页面的按钮 - 向上移动200像素
   recordButton = createButton('Start Recording');
-  recordButton.position(width*3/4 - 180, height/2 - 250); // 从height/2 - 50改为height/2 - 250
+  recordButton.position(width*3/4 - 180, height/2 - 250);
   recordButton.size(150, 50);
+  recordButton.style('background-color', 'rgba(247, 212, 16, 0.5)');
+  recordButton.style('color', '#202020');
+  recordButton.style('border', 'none');
+  recordButton.style('border-radius', '10px');
+  recordButton.style('font-size', '16px');
   recordButton.mousePressed(toggleRecording);
   recordButton.hide(); // 默认隐藏，只在录制模式显示
   
   transcribeButton = createButton('Transcribe Audio');
-  transcribeButton.position(width*3/4 - 180, height/2 - 180); // 从height/2 + 20改为height/2 - 180
+  transcribeButton.position(width*3/4 - 180, height/2 - 180);
   transcribeButton.size(150, 50);
+  transcribeButton.style('background-color', 'rgba(247, 212, 16, 0.5)');
+  transcribeButton.style('color', '#202020');
+  transcribeButton.style('border', 'none');
+  transcribeButton.style('border-radius', '10px');
+  transcribeButton.style('font-size', '16px');
   transcribeButton.mousePressed(transcribeAudio);
   transcribeButton.attribute('disabled', '');
   transcribeButton.hide(); // 默认隐藏，只在录制模式显示
   
   saveButton = createButton('Save Lyrics');
-  saveButton.position(width*3/4 + 10, height/2 - 180); // 从height/2 + 90改为height/2 - 110
+  saveButton.position(width*3/4 + 10, height/2 - 180);
   saveButton.size(150, 50);
+  saveButton.style('background-color', 'rgba(247, 212, 16, 0.5)');
+  saveButton.style('color', '#202020');
+  saveButton.style('border', 'none');
+  saveButton.style('border-radius', '10px');
+  saveButton.style('font-size', '16px');
   saveButton.mousePressed(saveLyrics);
   saveButton.attribute('disabled', '');
   saveButton.hide(); // 默认隐藏，只在录制模式显示
+  
+  // 创建上传封面按钮
+  uploadButton = createButton('Upload Cover Image');
+  uploadButton.position(width/4 - 200, height/2 - 50);
+  uploadButton.size(150, 50);
+  uploadButton.style('background-color', 'rgba(247, 212, 16, 0.5)');
+  uploadButton.style('color', '#202020');
+  uploadButton.style('border', 'none');
+  uploadButton.style('border-radius', '10px');
+  uploadButton.style('font-size', '16px');
+  uploadButton.mousePressed(uploadCoverImage);
+  uploadButton.hide(); // 默认隐藏，只在录制模式显示
   
   // 设置为默认启用模拟模式
   simulationMode = true;
 }
 
 function draw() {
-  // Set deep blue background (21, 34, 56)
-  background(21, 34, 56);
+  background("#f6ecc9");
   
   if (currentMode === "show") {
     drawShowMode();
@@ -166,12 +206,14 @@ function draw() {
     recordButton.hide();
     transcribeButton.hide();
     saveButton.hide();
+    uploadButton.hide(); // 在展示模式隐藏上传按钮
   } else if (currentMode === "record") {
     drawRecordMode();
     // 显示录制模式的按钮
     recordButton.show();
     transcribeButton.show();
     saveButton.show();
+    uploadButton.show();
   }
   
   // 绘制模式切换按钮
@@ -180,10 +222,64 @@ function draw() {
 
 // 展示模式的绘制
 function drawShowMode() {
+  // Draw background image based on current vinyl index
+  if (backgroundImages[currentVinylIndex]) {
+    let bgImg = backgroundImages[currentVinylIndex];
+    let imgRatio = bgImg.width / bgImg.height;
+    let canvasRatio = width / height;
+    let drawWidth, drawHeight;
+    
+    if (imgRatio > canvasRatio) {
+      drawHeight = height;
+      drawWidth = height * imgRatio;
+    } else {
+      drawWidth = width;
+      drawHeight = width / imgRatio;
+    }
+    
+    // Draw background image centered
+    imageMode(CENTER);
+    image(bgImg, width/2, height/2, drawWidth, drawHeight);
+  }
+  
+  // 显示歌词
+  displayLyrics();
+  
+  // Draw bottom control icons
+  if (voiceImg && pauseImg && listImg) {
+    let iconHeight = height * 0.04; // 设置图标高度为屏幕高度的5%
+    let iconWidth = iconHeight; // 保持图标为正方形
+    let spacing = width * 0.05; // 设置图标之间的间距为屏幕宽度的10%
+    let startX = (width - (iconWidth * 3 + spacing * 2)) / 2; // 计算起始x坐标使图标居中
+    
+    // 绘制voice图标
+    imageMode(CENTER);
+    image(voiceImg, startX + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+    
+    // 绘制pause图标
+    image(pauseImg, startX + iconWidth + spacing + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+    
+    // 绘制list图标
+    image(listImg, startX + (iconWidth + spacing) * 2 + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+  }
+  
+  // Draw start and end images
+  if (startImg && endImg) {
+    let sideImgHeight = height * 0.05; // 设置侧边图片高度为屏幕高度的10%
+    let sideImgWidth = sideImgHeight * (startImg.width / startImg.height); // 保持宽高比
+    
+    // 绘制左侧start图片
+    imageMode(CENTER);
+    image(startImg, sideImgWidth/2 + 200, height/2, sideImgWidth, sideImgHeight);
+    
+    // 绘制右侧end图片
+    image(endImg, width - sideImgWidth/2 - 200, height/2, sideImgWidth, sideImgHeight);
+  }
+  
   // Rotate vinyl record
   if (vinylImages[currentVinylIndex]) {
     push();
-    translate(width/2, height/2); // Adjust vinyl position to center
+    translate(width/2, height/2); 
     rotate(angle);
     scale(vinylScale);
     image(vinylImages[currentVinylIndex], 0, 0);
@@ -203,17 +299,17 @@ function drawShowMode() {
   
   // Draw buttons
   drawButtons();
-  
-  // 显示歌词
-  displayLyrics();
 }
 
 // 录制模式的绘制
 function drawRecordMode() {
   // 划分左右两半部分
-  stroke(100);
-  strokeWeight(1);
+  stroke("#ffffff");
+  strokeWeight(0.5);
   line(width/2, 0, width/2, height);
+  
+  // 显示上传按钮
+  uploadButton.show();
   
   // 在左半部分显示封面图片
   if (coverImg) {
@@ -248,14 +344,15 @@ function drawRecordMode() {
   
   // 绘制标题
   textAlign(CENTER, TOP);
-  textSize(28);
-  fill(255);
+  textSize(30);
+  fill('#202020');
+  noStroke();
   text("Let's create your own story!", width*3/4, 80);
   
   // 绘制录音状态
   textSize(18);
-  fill(isRecording ? "#FF5252" : "#FFFFFF");
-  text(recordingStatus, width*3/4, height/2 - 290);
+  fill(isRecording ? "#F7d44c" : "#202020");
+  text(recordingStatus, width*3/4, height/2 - 300);
   
   // 绘制录音计时器
   if (isRecording || recordingDuration > 0) {
@@ -268,7 +365,7 @@ function drawRecordMode() {
     let timeText = nf(minutes, 2) + ":" + nf(seconds, 2);
     
     // 绘制计时器背景
-    fill(isRecording ? "#FF5252" : "#4CAF50");
+    fill(isRecording ? "#F7d44c" : "#414141");
     rect(width*3/4 + 50, height/2 - 240, 80, 30, 5);
     
     // 绘制计时器文本
@@ -281,8 +378,8 @@ function drawRecordMode() {
   
   // 绘制录音动画（如果正在录音）
   if (isRecording) {
-    fill("#FF5252");
-    ellipse(width*3/4 - 80, height/2 - 280, 20 + 10 * sin(frameCount * 0.1), 20 + 10 * sin(frameCount * 0.1));
+    fill("#f7d44c");
+    ellipse(width*3/4 - 80, height/2 - 290, 20 + 10 * sin(frameCount * 0.1), 20 + 10 * sin(frameCount * 0.1));
   }
   
   // 如果正在转写，显示加载动画
@@ -320,7 +417,7 @@ function drawRecordMode() {
   }
   
   // 绘制转写结果框
-  fill(40, 53, 74);
+  fill("#eb7a53");
   const resultBoxX = width*3/4 - 200;
   const resultBoxY = height/2 - 100;
   const resultBoxWidth = 400;
@@ -328,7 +425,7 @@ function drawRecordMode() {
   rect(resultBoxX, resultBoxY, resultBoxWidth, resultBoxHeight, 10);
   
   // 显示转写结果 - 实现自动换行
-  fill(255);
+  fill(0);
   textSize(16);
   textAlign(LEFT, TOP); // 改为左对齐和顶部对齐
   
@@ -342,19 +439,15 @@ function drawRecordMode() {
   // 如果有转写结果，则显示结果；否则显示提示文本
   const textToDisplay = transcriptionResult || "Transcription result will appear here";
   
-  // 实现文本换行
   let words = textToDisplay.split(' ');
   let currentLine = '';
   let y = textAreaY;
   let lineHeight = 24;
   
-  // 逐词检查并添加到当前行
   for (let i = 0; i < words.length; i++) {
     let word = words[i];
     let testLine = currentLine === '' ? word : currentLine + ' ' + word;
     let testWidth = textWidth(testLine);
-    
-    // 如果添加这个词会超出宽度，则绘制当前行并开始新行
     if (testWidth > textAreaWidth) {
       text(currentLine, textAreaX, y);
       y += lineHeight;
@@ -534,32 +627,8 @@ function saveLyrics() {
     return;
   }
   
-  // 由于无法在前端直接写入文件，我们需要通过API请求保存
-  // 在实际应用中，你需要创建一个后端API来处理这个请求
-  alert('The lyrics save function requires backend support. In a real application, this would save the transcription result to the text.txt file.\n\nTranscription result:\n' + transcriptionResult);
-  
-  // 如果有后端API，可以使用下面的代码发送请求
-  /*
-  fetch('http://localhost:3000/api/save-lyrics', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text: transcriptionResult })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      alert('Lyrics saved successfully');
-    } else {
-      alert('Failed to save lyrics: ' + (data.error || "Unknown error"));
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Failed to save lyrics: ' + error.message);
-  });
-  */
+  // 显示提示信息
+  alert('This is a demo version. In a real application, this would save the transcription result to the text.txt file.\n\nTranscription result:\n' + transcriptionResult);
 }
 
 // 显示歌词的函数
@@ -571,7 +640,7 @@ function displayLyrics() {
   if (currentTime - lastLyricChangeTime > lyricChangeInterval) {
     currentLyricIndex = (currentLyricIndex + 1) % lyrics.length;
     lastLyricChangeTime = currentTime;
-    lyricFadeIn = 0; // 重置淡入效果
+    lyricFadeIn = 0; 
   }
   
   // 计算淡入效果
@@ -582,19 +651,18 @@ function displayLyrics() {
   // 绘制当前歌词
   if (lyrics[currentLyricIndex]) {
     textAlign(CENTER, CENTER);
-    // 如果有加载字体，可以使用: textFont(lyricFont);
     textSize(28);
     
-    // 设置歌词位置在屏幕底部
-    let bottomMargin = height - 70; // 距离底部70像素
+    // 设置歌词位置在屏幕顶部
+    let topMargin = 70; // 距离顶部70像素
     
     // 添加文字阴影效果
     fill(0, 0, 0, lyricFadeIn * 0.7);
-    text(lyrics[currentLyricIndex], width/2 + 2, bottomMargin + 2);
+    text(lyrics[currentLyricIndex], width/2 + 2, topMargin + 2);
     
     // 绘制主文本
     fill(255, 255, 255, lyricFadeIn);
-    text(lyrics[currentLyricIndex], width/2, bottomMargin);
+    text(lyrics[currentLyricIndex], width/2, topMargin);
   }
 }
 
@@ -668,16 +736,39 @@ function windowResized() {
   const buttonWidth = 80;
   const buttonHeight = 40;
   const buttonSpacing = 20;
-  let startX = (width - (buttonWidth * 3 + buttonSpacing * 2)) / 2;
+  let rightMargin = 40; // 右侧边距
   let topMargin = 40; // 顶部边距
   
-  for (let i = 0; i < 3; i++) {
-    buttons[i].x = startX + i * (buttonWidth + buttonSpacing);
-    buttons[i].y = topMargin;
+  for (let i = 0; i < 4; i++) {
+    buttons[i].x = width - buttonWidth - rightMargin; // 将按钮放在右半部分
+    buttons[i].y = topMargin + i * (buttonHeight + buttonSpacing); // 垂直排列
   }
   
   // 更新录制页面按钮位置 - 向上移动200像素
   recordButton.position(width*3/4 - 200, height/2 - 250);
   transcribeButton.position(width*3/4 - 200, height/2 - 180);
   saveButton.position(width*3/4 - 20, height/2 - 180);
+  uploadButton.position(width/4 - 75, height/2 - 200);
+}
+
+// 上传封面图片的函数
+function uploadCoverImage() {
+  // 创建一个文件输入元素
+  let input = createFileInput(handleFile);
+  input.position(width/4 - 200, height/2 - 50);
+  input.size(150, 50);
+  input.style('opacity', '0');
+  input.style('cursor', 'pointer');
+  input.style('z-index', '100');
+}
+
+// 处理上传的文件
+function handleFile(file) {
+  if (file.type === 'image') {
+    coverImg = loadImage(file.data, function(img) {
+      console.log('Cover image loaded successfully');
+    });
+  } else {
+    alert('Please upload an image file');
+  }
 }
