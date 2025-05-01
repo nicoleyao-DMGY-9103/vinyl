@@ -14,6 +14,7 @@ let endImg; // End image
 let voiceImg; // Voice image
 let pauseImg; // Pause image
 let listImg; // List image
+let shareImg; // Share image
 let uploadButton; // Upload cover image button
 
 // 歌词相关变量
@@ -60,6 +61,7 @@ function preload() {
   voiceImg = loadImage('voice.svg'); // Load voice image
   pauseImg = loadImage('pause.svg'); // Load pause image
   listImg = loadImage('list.svg'); // Load list image
+  shareImg = loadImage('share.svg'); // Load share image
 
   // Load multiple vinyl images
   vinylImages.push(loadImage('v1.png'));
@@ -88,10 +90,11 @@ function setup() {
   
   leftHalfWidth = width / 2;
   
+  // Create buttons
   const buttonWidth = 80;
   const buttonHeight = 40;
   const buttonSpacing = 20;
-  const buttonColors = ["#FF5252", "#4CAF50", "#2196F3", "#FF9800"]; 
+  const buttonColors = ["#ffffff", "#ffffff", "#ffffff", "#ffffff"]; 
   const buttonNames = ["love", "travel", "adventure", "childhood"];
   
   // 计算按钮起始位置，右侧垂直排列
@@ -100,8 +103,8 @@ function setup() {
   
   for (let i = 0; i < 4; i++) {
     buttons.push({
-      x: width - buttonWidth - rightMargin, // 将按钮放在右半部分
-      y: topMargin + i * (buttonHeight + buttonSpacing), // 垂直排列
+      x: width - buttonWidth - rightMargin,
+      y: topMargin + i * (buttonHeight + buttonSpacing),
       width: buttonWidth,
       height: buttonHeight,
       color: buttonColors[i],
@@ -169,7 +172,7 @@ function setup() {
   transcribeButton.attribute('disabled', '');
   transcribeButton.hide(); // 默认隐藏，只在录制模式显示
   
-  saveButton = createButton('Save Lyrics');
+  saveButton = createButton('Save Story');
   saveButton.position(width*3/4 + 10, height/2 - 180);
   saveButton.size(150, 50);
   saveButton.style('background-color', 'rgba(247, 212, 16, 0.5)');
@@ -246,21 +249,24 @@ function drawShowMode() {
   displayLyrics();
   
   // Draw bottom control icons
-  if (voiceImg && pauseImg && listImg) {
+  if (voiceImg && pauseImg && listImg && shareImg) {
     let iconHeight = height * 0.04; // 设置图标高度为屏幕高度的5%
     let iconWidth = iconHeight; // 保持图标为正方形
     let spacing = width * 0.05; // 设置图标之间的间距为屏幕宽度的10%
-    let startX = (width - (iconWidth * 3 + spacing * 2)) / 2; // 计算起始x坐标使图标居中
+    let startX = (width - (iconWidth * 4 + spacing * 3)) / 2; // 计算起始x坐标使图标居中
     
     // 绘制voice图标
     imageMode(CENTER);
-    image(voiceImg, startX + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+    image(voiceImg, startX + iconWidth/2, height - iconHeight/2 - 50, iconWidth, iconHeight);
     
     // 绘制pause图标
-    image(pauseImg, startX + iconWidth + spacing + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+    image(pauseImg, startX + iconWidth + spacing + iconWidth/2, height - iconHeight/2 - 50, iconWidth, iconHeight);
     
     // 绘制list图标
-    image(listImg, startX + (iconWidth + spacing) * 2 + iconWidth/2, height - iconHeight/2 - 70, iconWidth, iconHeight);
+    image(listImg, startX + (iconWidth + spacing) * 2 + iconWidth/2, height - iconHeight/2 - 50, iconWidth, iconHeight);
+    
+    // 绘制share图标
+    image(shareImg, startX + (iconWidth + spacing) * 3 + iconWidth/2, height - iconHeight/2 - 50, iconWidth, iconHeight);
   }
   
   // Draw start and end images
@@ -347,7 +353,7 @@ function drawRecordMode() {
   textSize(30);
   fill('#202020');
   noStroke();
-  text("Let's create your own story!", width*3/4, 80);
+  text("Let's create your own story!", width*3/4, 50);
   
   // 绘制录音状态
   textSize(18);
@@ -671,23 +677,25 @@ function drawButtons() {
   for (let i = 0; i < buttons.length; i++) {
     const button = buttons[i];
     
-    // If button is pressed, use darker color
-    if (i === buttonPressed) {
-      fill(lerpColor(color(button.color), color(0), 0.3));
-    } else {
-      fill(button.color);
-    }
-    
-    stroke(255);
-    strokeWeight(2);
+    // 绘制按钮背景（白色透明）
+    fill(255, 255, 255, 0.8);
+    stroke(255, 255, 255);
+    strokeWeight(1);
     rect(button.x, button.y, button.width, button.height, 10);
     
-    // Draw button text
-    fill(255);
+    // 绘制按钮文本（使用不同的颜色）
+    fill(button.color);
     noStroke();
     textSize(14);
     textAlign(CENTER, CENTER);
     text(button.name, button.x + button.width / 2, button.y + button.height / 2);
+    
+    // 如果按钮被按下，添加高亮效果
+    if (i === buttonPressed) {
+      fill(255, 255, 255, 0.8);
+      noStroke();
+      rect(button.x, button.y, button.width, button.height, 10);
+    }
   }
 }
 
