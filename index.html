@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vinyl Player and Speech-to-Text</title>
+    <title>Vinyl - 音乐故事创作平台</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
     <style>
@@ -11,10 +11,62 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        .hidden {
+            display: none;
+        }
+
+        .server-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
+    <div id="server-status" class="server-status">服务器状态: 检查中...</div>
+    
+    <script>
+        // 检查服务器状态
+        async function checkServerStatus() {
+            const statusElement = document.getElementById('server-status');
+            try {
+                const response = await fetch('http://localhost:3000/api/test');
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    statusElement.innerHTML = '服务器状态: 已连接';
+                    statusElement.style.backgroundColor = 'rgba(76, 175, 80, 0.7)';
+                    // 设置全局变量表示服务器可用
+                    window.serverAvailable = true;
+                } else {
+                    throw new Error('服务器响应异常');
+                }
+            } catch (error) {
+                console.error('服务器连接错误:', error);
+                statusElement.innerHTML = '服务器状态: 未连接 (使用模拟模式)';
+                statusElement.style.backgroundColor = 'rgba(255, 82, 82, 0.7)';
+                // 设置全局变量表示服务器不可用
+                window.serverAvailable = false;
+            }
+            
+            // 5秒后隐藏状态提示
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // 页面加载后检查服务器状态
+        window.addEventListener('load', checkServerStatus);
+    </script>
+    
+    <!-- 主要的p5.js脚本 -->
     <script src="sketch.js"></script>
 </body>
 </html> 
